@@ -11,4 +11,9 @@ public class Logger {
     public static void log(String s) {
         System.out.println("  " + dtf.format(LocalDateTime.now()) + " ||| " + s);
     }
+
 }
+
+
+//NEXT FEATURE - of course we should use SLF4J/logback and other proper libraries for logging and rolling into file for stats
+// this was a quick hack for achieving the goal

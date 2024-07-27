@@ -39,13 +39,14 @@ public class MicroBatchingLibrary {
 
     }
 
-    public synchronized Future<JobResult> submitJob(Job job) {
-        Logger.log("---   SUBMIT JOB   -----  current batch size at submission " + currentBatch.size());
+    public Future<JobResult> submitJob(Job job) {
+            //        Logger.log("---   SUBMIT JOB   -----  current batch size at submission " + currentBatch.size());
 
-        if (isShuttingDown.get()) {
-            Logger.log("---   LIBRARY IS BEEN SHOUTDOWN NEEDS A RESTART NO MORE JOBS CAN BE SUBMITTED " + currentBatch.size());
+            if (isShuttingDown.get()) {
+                //UnComment only for testing purposes
+            //            Logger.log("---   LIBRARY IS BEEN SHOUTDOWN NEEDS A RESTART NO MORE JOBS CAN BE SUBMITTED " + currentBatch.size());
             return null;
-                // throw new RejectedExecutionException("---   SUBMIT JOB   -----  MicroBatchingLibrary is shutting down, cannot accept new jobs");
+            // throw new RejectedExecutionException("---   SUBMIT JOB   -----  MicroBatchingLibrary is shutting down, cannot accept new jobs");
         }
 
         CompletableFuture<JobResult> jobResultFuture = new CompletableFuture<>();
@@ -96,7 +97,8 @@ public class MicroBatchingLibrary {
 
     }
 
-    private synchronized void processBatch() {
+    private void processBatch() {
+        //lets add batches number and show when we exiting and when we entering
         Logger.log("---   PROCESS  BATCH   -----  starting batch process");
         Logger.log("---   PROCESS  BATCH   -----  current batch size " + currentBatch.size());
 
@@ -108,7 +110,20 @@ public class MicroBatchingLibrary {
         currentBatch.clear();
 
         Logger.log("---   PROCESS  BATCH   -----  submitting to worker pool " + batchToProcess.size());
+        // NEXT FEATURE
+        // here we might need a batches processor system - give each batch a number
+        // then store a history and then see results and reports by batch
+        // also we will need batch processor to give us stats of haw many been processed
         workerPool.submit(() -> batchProcessor.process(batchToProcess));
+        // NEXT FEATURE
+        // We should make sure in summary the number of jobs ran is equal
+        // to the number of jobs submitted
+        // usually in EDA it is called a RECONCILE process
+        // Possible because I used list some jobs were lost between submit and clear - however method is synchronised still not a workaround for now
+        // not ideal can be a bottleneck - should be more flexible for being able to handle more load
+        // need to think how to make sue every submitted job is executed - relates to in MAIN class
+        // I will be analysing the FUTUREs until they complete - logically if some of them is not than
+        // somewhere I should have lost execution of it
 
     }
 
