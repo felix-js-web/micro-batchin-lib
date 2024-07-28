@@ -15,5 +15,5 @@ public class Logger {
 }
 
 
-//NEXT FEATURE - of course we should use SLF4J/logback and other proper libraries for logging and rolling into file for stats
-// this was a quick hack for achieving the goal
+    //TODO NEXT FEATURE - of course we should use SLF4J/logback and other proper libraries for logging and rolling into file for stats
+    // this was a quick hack for achieving the goal

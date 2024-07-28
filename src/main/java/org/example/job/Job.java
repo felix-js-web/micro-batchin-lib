@@ -7,6 +7,6 @@ public interface Job {
 
     AtomicInteger ATOMIC_JOB_COUNT = new AtomicInteger();
 
-    void execute();
+    String execute();
 
 }

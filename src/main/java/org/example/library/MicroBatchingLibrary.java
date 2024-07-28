@@ -39,21 +39,30 @@ public class MicroBatchingLibrary {
 
     }
 
-    public Future<JobResult> submitJob(Job job) {
-            //        Logger.log("---   SUBMIT JOB   -----  current batch size at submission " + currentBatch.size());
+    //TODO for now keeping it synchronised - warehouse problem with one goods in and one batch sending point
+    // do we need it to make it multiple ot accept and batch? will reuse it with concurrency safe data structure
+    // later and make it an option use with synchronised or not
+    public synchronized Future<JobResult> submitJob(Job job) {
+        //        Logger.log("---   SUBMIT JOB   -----  current batch size at submission " + currentBatch.size());
 
-            if (isShuttingDown.get()) {
-                //UnComment only for testing purposes
-            //            Logger.log("---   LIBRARY IS BEEN SHOUTDOWN NEEDS A RESTART NO MORE JOBS CAN BE SUBMITTED " + currentBatch.size());
+        if (isShuttingDown.get()) {
+            //UnComment only for testing purposes
+            //            Logger.log("---   LIBRARY IS BEEN SHUTDOWN NEEDS A RESTART NO MORE JOBS CAN BE SUBMITTED " + currentBatch.size());
             return null;
             // throw new RejectedExecutionException("---   SUBMIT JOB   -----  MicroBatchingLibrary is shutting down, cannot accept new jobs");
         }
 
         CompletableFuture<JobResult> jobResultFuture = new CompletableFuture<>();
 
+        //TODO NEXT FEATURE as you CAN SEE there is no linkage in IDs between SUBMITTED JOB and EXECUTED JOB results
+        // Ideally JOB Result should have submitted Job Id looking at if I can still do it
+        // but then it can be just one functional interface approach
+        // I might need to go with more complex structure to keep ID Request or response string and success status
         currentBatch.add(() -> {
-            job.execute();
-            jobResultFuture.complete(new SampleJobResult(true));
+            String executionResult = job.execute();
+            SampleJobResult sampleJobResult = new SampleJobResult(executionResult);
+            jobResultFuture.complete(sampleJobResult);
+            return executionResult;
         });
 
         if (currentBatch.size() >= batchSize) {
@@ -97,10 +106,11 @@ public class MicroBatchingLibrary {
 
     }
 
-    private void processBatch() {
-        //lets add batches number and show when we exiting and when we entering
-        Logger.log("---   PROCESS  BATCH   -----  starting batch process");
-        Logger.log("---   PROCESS  BATCH   -----  current batch size " + currentBatch.size());
+    //TODO for now keeping it synchronised - warehouse problem with one goods in and one batch sending point
+    // do we need it to make it multiple ot accept and batch? will reuse it with concurrency safe data structure
+    // later and make it an option use with synchronised or not
+    private synchronized void processBatch() {
+
 
         if (currentBatch.isEmpty()) {
             return;
@@ -109,13 +119,16 @@ public class MicroBatchingLibrary {
         List<Job> batchToProcess = new ArrayList<>(currentBatch);
         currentBatch.clear();
 
-        Logger.log("---   PROCESS  BATCH   -----  submitting to worker pool " + batchToProcess.size());
-        // NEXT FEATURE
+        //Logger.log("---   PROCESS  BATCH   -----  submitting to worker pool the following number of items" + batchToProcess.size());
+        // TODO NEXT FEATURE
         // here we might need a batches processor system - give each batch a number
         // then store a history and then see results and reports by batch
         // also we will need batch processor to give us stats of haw many been processed
+        // QUICK HACK atomic variable for number of batches in batch processor
+        //Logger.log("---   PROCESS  BATCH   -----  BATCH NUMBER BEEN SENT TO IS " + batchProcessor.ATOMIC_BATCHES_COUNT_EXECUTED_BY_BATCH_PROCESSOR.getAndIncrement());
+        Logger.log(String.format("---   PROCESS  BATCH   -----  starting batch process NUMBER  %d  with SIZE %d ", batchProcessor.ATOMIC_BATCHES_COUNT_EXECUTED_BY_BATCH_PROCESSOR.getAndIncrement(), batchToProcess.size()));
         workerPool.submit(() -> batchProcessor.process(batchToProcess));
-        // NEXT FEATURE
+        // TODO NEXT FEATURE
         // We should make sure in summary the number of jobs ran is equal
         // to the number of jobs submitted
         // usually in EDA it is called a RECONCILE process
@@ -124,6 +137,12 @@ public class MicroBatchingLibrary {
         // need to think how to make sue every submitted job is executed - relates to in MAIN class
         // I will be analysing the FUTUREs until they complete - logically if some of them is not than
         // somewhere I should have lost execution of it
+
+
+        // TODO NEXT FEATURE
+        // We could also link each JobResult and Batch Job ID and Batch ID
+        // - for now only Batch Job ID is linked - I am looking IF I can get a catch ID there too
+        // - so that our results are known when and how they shipped - for now we just keeping those variable for numbers
 
     }
 

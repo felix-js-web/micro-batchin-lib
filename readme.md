@@ -18,7 +18,13 @@ The requirements above leave some unanswered questions, so you will need to use 
 to design the most useful library
 
 
+
+
+
+
 Some misunderstanding about submit and Job procesor clarify what is it doing waiting or not or just future with success 
+
+
 
 Clean up loggin till the end - initial part is not making any sense
 ID is in SampleJob and SampleJobResult response
