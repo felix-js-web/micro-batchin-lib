@@ -1,10 +1,9 @@
-package org.example.job.impl;
+package org.example;
 
-import org.example.job.Job;
-import org.example.processor.BatchProcessor;
-import org.example.utils.Logger;
+import org.example.library.job.Job;
+import org.example.library.processor.BatchProcessor;
+import org.example.library.utils.Logger;
 
-import java.util.Random;
 import java.util.random.RandomGenerator;
 
 public class SampleJob implements Job {

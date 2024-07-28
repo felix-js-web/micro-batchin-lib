@@ -1,6 +1,6 @@
-package org.example.processor;
+package org.example.library.processor;
 
-import org.example.job.Job;
+import org.example.library.job.Job;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;

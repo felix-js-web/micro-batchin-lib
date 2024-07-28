@@ -1,10 +1,10 @@
 package org.example.library;
 
-import org.example.job.Job;
-import org.example.job.JobResult;
-import org.example.job.impl.SampleJobResult;
-import org.example.processor.BatchProcessor;
-import org.example.utils.Logger;
+import org.example.library.job.Job;
+import org.example.library.job.JobResult;
+import org.example.library.job.impl.SampleJobResult;
+import org.example.library.processor.BatchProcessor;
+import org.example.library.utils.Logger;
 
 import java.util.ArrayList;
 import java.util.List;

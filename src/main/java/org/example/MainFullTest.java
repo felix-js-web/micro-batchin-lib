@@ -1,11 +1,10 @@
 package org.example;
 
-import org.example.job.Job;
-import org.example.job.JobResult;
-import org.example.job.impl.SampleJob;
+import org.example.library.job.Job;
+import org.example.library.job.JobResult;
 import org.example.library.MicroBatchingLibrary;
-import org.example.processor.BatchProcessor;
-import org.example.utils.Logger;
+import org.example.library.processor.BatchProcessor;
+import org.example.library.utils.Logger;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;

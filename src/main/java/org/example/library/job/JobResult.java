@@ -1,4 +1,4 @@
-package org.example.job;
+package org.example.library.job;
 
 // Interface for JobResult
 public interface JobResult {

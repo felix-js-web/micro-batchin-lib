@@ -1,4 +1,4 @@
-package org.example.utils;
+package org.example.library.utils;
 
 import javax.swing.plaf.nimbus.State;
 import java.time.LocalDateTime;

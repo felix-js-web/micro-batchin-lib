@@ -1,9 +1,9 @@
 package org.example.library;
 
-import org.example.job.Job;
-import org.example.job.JobResult;
-import org.example.processor.BatchProcessor;
-import org.example.utils.Logger;
+import org.example.library.job.Job;
+import org.example.library.job.JobResult;
+import org.example.library.processor.BatchProcessor;
+import org.example.library.utils.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.util.concurrent.CompletableFuture;
