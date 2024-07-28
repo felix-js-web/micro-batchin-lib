@@ -83,7 +83,11 @@ public class MicroBatchingLibrary {
 
     }
 
-    public synchronized void shutdown() {
+    public boolean checkIfShutDown() {
+        return scheduler.isShutdown() && workerPool.isShutdown() && currentBatch.isEmpty();
+    }
+
+        public synchronized void shutdown() {
 
         Logger.log("---   SHUT DOWN   -----  starting library shutting down");
         Logger.log("---   SHUT DOWN   -----   current batch size is " + currentBatch.size());

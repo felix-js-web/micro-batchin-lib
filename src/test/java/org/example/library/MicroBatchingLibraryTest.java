@@ -74,15 +74,31 @@ class MicroBatchingLibraryTest {
         verify(batchProcessor, times(1)).process(anyList());
     }
 
-//    @Test
-//    void shutdownWaitsForAllTasksToComplete() throws InterruptedException {
-//        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(numberOfThreads);
-//        ExecutorService workerPool = Executors.newFixedThreadPool(numberOfThreads);
-//        library = new MicroBatchingLibrary(batchSize, batchIntervalMillis, batchProcessor, numberOfThreads, true);
-//        library.shutdown();
-//        assertTrue(scheduler.isShutdown());
-//        assertTrue(workerPool.isShutdown());
-//    }
+    @Test
+    void shutdownWaitsForAllTasksToCompleteAndExecutorsBeingShutdown() throws InterruptedException, ExecutionException {
+        Logger.log("running test");
+        // Some Fake implementation of Batch Processor for testing purposes
+        BatchProcessor batchProcessor = (jobs) -> jobs.forEach(Job::execute);
+        MicroBatchingLibrary libraryMocked = new MicroBatchingLibrary(batchSize,
+                batchIntervalMillis*20, //wait 20 seconds
+                batchProcessor, numberOfThreads, false);
+        String requestResponse = "result";
+        when(job.execute()).thenReturn(requestResponse);
+        CompletableFuture<JobResult> future = (CompletableFuture<JobResult>) libraryMocked.submitJob(job);
+
+        libraryMocked.shutdown();
+
+        Thread.sleep(batchIntervalMillis * 2);
+
+        assertNotNull(future);
+
+        String futureResponse = future.get().getResponse();
+        assertEquals("result", futureResponse);
+        //logged lines to have visibility scheduled timer executed after 10 seconds
+        // and future returned the response
+        Logger.log("running test finished" + futureResponse);
+        assertTrue(libraryMocked.checkIfShutDown());
+    }
 
     @Test
     void scheduledProcessBatchExecutesAtFixedRate() throws InterruptedException {
