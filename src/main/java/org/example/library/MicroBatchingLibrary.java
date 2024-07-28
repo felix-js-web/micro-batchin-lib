@@ -101,16 +101,13 @@ public class MicroBatchingLibrary {
     }
 
     private void startBatchScheduler() {
-
-        //scheduler.scheduleAtFixedRate(this::processBatch, batchIntervalMillis, batchIntervalMillis, TimeUnit.MILLISECONDS);
-
+        scheduler.scheduleAtFixedRate(this::processBatch, batchIntervalMillis, batchIntervalMillis, TimeUnit.MILLISECONDS);
     }
 
     //TODO for now keeping it synchronised - warehouse problem with one goods in and one batch sending point
     // do we need it to make it multiple ot accept and batch? will reuse it with concurrency safe data structure
     // later and make it an option use with synchronised or not
     private synchronized void processBatch() {
-
 
         if (currentBatch.isEmpty()) {
             return;
