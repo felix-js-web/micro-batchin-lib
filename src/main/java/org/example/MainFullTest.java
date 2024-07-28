@@ -16,16 +16,19 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Main {
+public class MainFullTest {
 
-    private static final int NUMBER_OF_JOBS = 12;
+    private static final int NUMBER_OF_JOBS = 1;
     private static final int NUMBER_OF_THREADS = 100;
 
-    private static final int BATCH_SIZE = 3;
+    private static final int BATCH_SIZE = 10;
+    private static final boolean USE_VIRTUAL_THREADS = true;
 
     private static final int BATCH_INTERVAL_MILLIS = 2000;
 
-    private static final int SUBMIT_TO_LIBRARY_IN_NUMBER_OF_THREADS = 15;
+    private static final int NUMBER_OF_MILLIS_BEFORE_SHUTDOWN_CALLED = 3000;
+
+    private static final int SUBMIT_TO_LIBRARY_IN_NUMBER_OF_THREADS = 1;
 
     private static final int SUBMIT_TO_LIBRARY_IN_NUMBER_OF_THREADS_AFTER_SHUTDOWN = 1;
 
@@ -38,13 +41,14 @@ public class Main {
         BatchProcessor batchProcessor = (jobs) -> jobs.forEach(Job::execute);
 
 
-        MicroBatchingLibrary library = new MicroBatchingLibrary(BATCH_SIZE, BATCH_INTERVAL_MILLIS, batchProcessor, NUMBER_OF_THREADS);
+        MicroBatchingLibrary library = new MicroBatchingLibrary(BATCH_SIZE,
+                BATCH_INTERVAL_MILLIS, batchProcessor, NUMBER_OF_THREADS,USE_VIRTUAL_THREADS);
         LocalDateTime startTime = LocalDateTime.now();
 
         submitInNumberOfThreadsToLibrary(library, SUBMIT_TO_LIBRARY_IN_NUMBER_OF_THREADS);
 
         try {
-            Thread.sleep(10000);
+            Thread.sleep(NUMBER_OF_MILLIS_BEFORE_SHUTDOWN_CALLED);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -68,9 +72,7 @@ public class Main {
                 {
                     try {
                         Logger.log(String.format("FUTURE JOB RESULT IS  RESULT %s and RESULT IS %s ", String.valueOf(futureJobResult.isDone()), futureJobResult.get().getResponse()));
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    } catch (ExecutionException e) {
+                    } catch (InterruptedException | ExecutionException e) {
                         throw new RuntimeException(e);
                     }
                 }
@@ -89,23 +91,23 @@ public class Main {
 
     private static void submitJobsToLibrary(MicroBatchingLibrary library, int numberOfThreadsSubmitting, int threadNumber) {
         for (int i = 0; i < NUMBER_OF_JOBS; i++) {
-            //make sure there are submissions in delays otherwise it will not look natural and CPU only submits and then executes
+            // make sure there are submissions in delays otherwise it will not look natural and CPU only submits and then executes
             // TODO NEXT FEATURE
             //  This one very interesting - it might seem to be breaking the code initially
             //  and that was my first feeling but actually it stretches the submission and there are moments when shutdown been called
             //  but submissions still ongoing even if they not accepted
             //  here we can add logging plus in future we can add more visibility for the process
-            // Clean the delay if you want less complex case example
-            try {
-                Thread.sleep(1000 * i);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            //  Clean the delay if you want less complex case example
+//            try {
+//                Thread.sleep(720 * i);
+//            } catch (InterruptedException e) {
+//                Thread.currentThread().interrupt();
+//            }
             Logger.log("    PRE SUBMISSION " + String.format("This Job has a Number %d from %d planned and been submitted from the Thread number %d", i, NUMBER_OF_JOBS, threadNumber));
             Future<JobResult> jobResultFuture = library.submitJob(new SampleJob(String.format("This Job has a Number %d from %d planned and been submitted from the Thread number %d", i, NUMBER_OF_JOBS, threadNumber)));
             if (jobResultFuture != null) {
                 // TODO NEXT FEATURE Avoid the SHUTDOWN return for Null Values I know it can be handled more gracefully
-                // job been submitted lets increase submission counter
+                //  job been submitted lets increase submission counter
                 ATOMIC_SUBMISSION_COUNT.getAndIncrement();
                 listSync.add(jobResultFuture);
             }

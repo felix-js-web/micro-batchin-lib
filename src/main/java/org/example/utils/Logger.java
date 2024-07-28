@@ -9,6 +9,8 @@ public class Logger {
     public static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.SSS");
 
     public static void log(String s) {
+        // TODO Next Feature
+        //  fix rolling logs to files
         System.out.println("  " + dtf.format(LocalDateTime.now()) + " ||| " + s);
     }
 

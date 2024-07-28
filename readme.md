@@ -22,25 +22,13 @@ to design the most useful library
 
 
 
-Some misunderstanding about submit and Job procesor clarify what is it doing waiting or not or just future with success 
-
-
-
-Clean up loggin till the end - initial part is not making any sense
-ID is in SampleJob and SampleJobResult response
-Sample Job add String as request
-SampleJobResult add String as Result
-
-Analyse Futures
-
-Analyse the Concurrency possible issues
-
-Analyse Virtual threads vs Real thread - 
-do the Option to use this or that
-USE# JAVA 21 this is a NEW feature when else can you learn it
+Analyse Virtual threads vs Real thread -  Done 4-5 times speed difference just using  
+virtual threads Java 21 - Mind BLowing
 
 Find if you can visualise a memory usage and cpu usage in threads vs Virtual Threads
+Yes With Grafana and Prometheus - did not have time to set up
 
+For UnSynch we can use Queue - linked blocking queue 
 
 STATS SYNCHRONIZED and UNSYNCHRONISED
 then we will think of THREAD SAFE STRUCTURE
