@@ -6,21 +6,32 @@ import org.example.library.job.impl.SampleJobResult;
 import org.example.library.processor.BatchProcessor;
 import org.example.library.utils.Logger;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 // MicroBatchingLibrary
 public class MicroBatchingLibrary {
 
     private final int batchSize;
+    private final int numberOfThreads;
     private final long batchIntervalMillis;
     private final BatchProcessor batchProcessor;
     private final ScheduledExecutorService scheduler;
     private final ExecutorService workerPool;
     private final List<Job> currentBatch;
     private final AtomicBoolean isShuttingDown;
+    private static final List<Future<JobResult>> listSync = Collections.synchronizedList(new ArrayList<>());
+
+    LocalDateTime startTime = LocalDateTime.now();
+    LocalDateTime endTime = LocalDateTime.now();
+
+    static AtomicInteger ATOMIC_SUBMISSION_COUNT = new AtomicInteger();
 
     public MicroBatchingLibrary(int batchSize,
                                 long batchIntervalMillis,
@@ -28,6 +39,7 @@ public class MicroBatchingLibrary {
                                 int numberOfThreads,
                                 boolean useVirtualThreads) {
 
+        this.numberOfThreads = numberOfThreads;
         this.batchSize = batchSize;
         this.batchIntervalMillis = batchIntervalMillis;
         this.batchProcessor = batchProcessor;
@@ -55,7 +67,7 @@ public class MicroBatchingLibrary {
 
         if (isShuttingDown.get()) {
             //UnComment only for testing purposes
-            //            Logger.log("---   LIBRARY IS BEEN SHUTDOWN NEEDS A RESTART NO MORE JOBS CAN BE SUBMITTED " + currentBatch.size());
+            Logger.log("---   LIBRARY IS BEEN SHUTDOWN NEEDS A RESTART NO MORE JOBS CAN BE SUBMITTED ");
             return null;
             // throw new RejectedExecutionException("---   SUBMIT JOB   -----  MicroBatchingLibrary is shutting down, cannot accept new jobs");
         }
@@ -74,11 +86,11 @@ public class MicroBatchingLibrary {
         });
 
         if (currentBatch.size() >= batchSize) {
-            Logger.log("---   SUBMIT JOB   -----  batchSize" + batchSize);
-            Logger.log("---   SUBMIT JOB   -----  current batch" + currentBatch.size());
+            Logger.log(String.format("---   SUBMITTING JOBS  ----- current batch list size is %d  batchSize %d", currentBatch.size() , batchSize));
             processBatch();
         }
-
+        listSync.add(jobResultFuture);
+        ATOMIC_SUBMISSION_COUNT.getAndIncrement();
         return jobResultFuture;
 
     }
@@ -87,16 +99,16 @@ public class MicroBatchingLibrary {
         return scheduler.isShutdown() && workerPool.isShutdown() && currentBatch.isEmpty();
     }
 
-        public synchronized void shutdown() {
+    public synchronized void shutdown() {
 
         Logger.log("---   SHUT DOWN   -----  starting library shutting down");
         Logger.log("---   SHUT DOWN   -----   current batch size is " + currentBatch.size());
         isShuttingDown.set(true);
 
-            Logger.log("---   SHUT DOWN   -----   in synchronised current batch size is " + currentBatch.size());
-            if (!currentBatch.isEmpty()) {
-                processBatch();
-            }
+        Logger.log("---   SHUT DOWN   -----   in synchronised current batch size is " + currentBatch.size());
+        if (!currentBatch.isEmpty()) {
+            processBatch();
+        }
 
         scheduler.shutdown();
         workerPool.shutdown();
@@ -107,7 +119,14 @@ public class MicroBatchingLibrary {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+        endTime = LocalDateTime.now();
+    }
 
+    public void doReconcileAtTheEnd(int numberOfJobsPerThread, int numberOfSubmissionThreads) {
+        long diff = ChronoUnit.NANOS.between(startTime, endTime);
+        Logger.log(String.format("RECONCILIATION FINAL STATS ARE   PARAMS   --- NUMBER OF JOBS %d  --  WILL RUN THIS NUMBER IN NUMBER OF THREADS  %d   --  WORKING THREADS  %d  -- BATCH SIZE %d   -- BATCH INTERVAL IN MILLIS  %d", numberOfJobsPerThread, numberOfSubmissionThreads, numberOfThreads, batchSize, batchIntervalMillis));
+        Logger.log(String.format("RECONCILIATION FINAL STATS ARE   RECONCILE/FACTS --- number of jobs planned to be submitted %d  -- number of jobs submitted %d  -- number of jobs executed  %s  -- number of BATCHES executed  %s   -- STARTTIME  %s     -- ENDTIME %s ", numberOfJobsPerThread * numberOfSubmissionThreads, ATOMIC_SUBMISSION_COUNT.get(), batchProcessor.ATOMIC_JOB_COUNT_EXECUTED_BY_BATCH_PROCESSOR.toString(), batchProcessor.ATOMIC_BATCHES_COUNT_EXECUTED_BY_BATCH_PROCESSOR.toString(), Logger.dtf.format(startTime), Logger.dtf.format(endTime)));
+        Logger.log("RECONCILIATION FINAL STATS ARE   ---  diff is " + diff + " in seconds it is  " + ((double) diff / 1_000_000_000.0));
     }
 
     private void startBatchScheduler() {
@@ -156,6 +175,23 @@ public class MicroBatchingLibrary {
         //  - for now only Batch Job ID is linked - I am looking IF I can get a catch ID there too
         //  - so that our results are known when and how they shipped - for now we just keeping those variable for numbers
 
+    }
+
+    private static void analyseJobResultsFutures(List<Future<JobResult>> jobResultList) {
+        jobResultList.forEach(
+                futureJobResult ->
+                {
+                    try {
+                        Logger.log(String.format("FUTURE JOB RESULT IS  RESULT %s and RESULT IS %s ", String.valueOf(futureJobResult.isDone()), futureJobResult.get().getResponse()));
+                    } catch (InterruptedException | ExecutionException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+        );
+    }
+
+    public void analyseJobResultsFutures() {
+        analyseJobResultsFutures(listSync);
     }
 
 }
